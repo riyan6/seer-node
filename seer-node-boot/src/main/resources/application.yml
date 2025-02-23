@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: seer-node
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 178.236.243.139:8848
+        enabled: true
+        register-enabled: true
+        namespace: bf8bb62e-8ab9-42e9-9913-548938bc2c64
+        group: DEFAULT_GROUP
+server:
+  port: 7700
