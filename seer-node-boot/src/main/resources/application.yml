@@ -11,3 +11,26 @@ spring:
         group: DEFAULT_GROUP
 server:
   port: 7700
+dubbo:
+  cloud:
+    subscribed-services: seer-subscribe
+  scan:
+    #指定 Dubbo 服务实现类的扫描基准包
+    base-packages: com.seer
+  protocol:
+    #使用dubbo协议
+    name: dubbo
+    # port 为协议端口（ -1 表示自增端口，从 20880 开始）
+    port: -1
+  registry:
+    #配置中心nacos地址
+    address: nacos://178.236.243.139:8848
+  config-center:
+    namespace: bf8bb62e-8ab9-42e9-9913-548938bc2c64
+  consumer:
+    timeout: 300000
+  application:
+    name: seer-node
+  security:
+    serialize:
+      allowlist: com.seer.node.model.*

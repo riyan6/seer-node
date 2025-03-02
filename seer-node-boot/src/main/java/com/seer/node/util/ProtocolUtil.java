@@ -16,11 +16,16 @@ import java.util.Map;
 public class ProtocolUtil {
 
     public static Protocol parse(String link) {
-        return switch (link) {
-            case String s when s.startsWith("vless:") -> parseVless(s);
-            case String s when s.startsWith("ss:") -> parseSs(s);
-            default -> throw new RuntimeException("无法解析该类型订阅");
-        };
+        if (StrUtil.isEmpty(link)) {
+            return null;
+        }
+        if (link.startsWith("vless:")) {
+            return parseVless(link);
+        }
+        if (link.startsWith("ss:")) {
+            return parseSs(link);
+        }
+        return null;
     }
 
     private static Shadowsocks parseSs(String link) {
