@@ -1,8 +1,12 @@
 package com.seer.node.util;
 
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.util.StrUtil;
 import com.seer.node.model.biz.Protocol;
+import com.seer.node.model.entity.Shadowsocks;
 import com.seer.node.model.entity.Vless;
 import com.seer.node.model.enums.ProtocolType;
+import org.springframework.util.Assert;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -12,25 +16,68 @@ import java.util.Map;
 public class ProtocolUtil {
 
     public static Protocol parse(String link) {
-        if (link != null && link.startsWith("vless:")) {
-            return parseVless(link);
+        return switch (link) {
+            case String s when s.startsWith("vless:") -> parseVless(s);
+            case String s when s.startsWith("ss:") -> parseSs(s);
+            default -> throw new RuntimeException("无法解析该类型订阅");
+        };
+    }
+
+    private static Shadowsocks parseSs(String link) {
+        try {
+            // 移除 "ss://" 前缀
+            String uriPart = link.substring(5);
+            String[] uriAndFragment = uriPart.split("#", 2);
+            String uri = uriAndFragment[0];
+            String name = uriAndFragment.length > 1 ? URLDecoder.decode(uriAndFragment[1], StandardCharsets.UTF_8) : "Unnamed";
+
+            // 分离用户信息和主机端口部分
+            String[] userAndHost = uri.split("@", 2);
+            if (userAndHost.length != 2) {
+                throw new IllegalArgumentException("Invalid SS URI format");
+            }
+
+            // 解码 Base64 部分（cipher:password）
+            String base64Credentials = userAndHost[0];
+            String decodedCredentials = new String(Base64.decode(base64Credentials), StandardCharsets.UTF_8);
+            String[] credentialParts = decodedCredentials.split(":", 2);
+            if (credentialParts.length != 2) {
+                throw new IllegalArgumentException("Invalid credentials format");
+            }
+            String cipher = credentialParts[0];
+            String password = credentialParts[1];
+
+            // 解析主机和端口
+            String[] hostAndPort = userAndHost[1].split(":", 2);
+            if (hostAndPort.length != 2) {
+                throw new IllegalArgumentException("Invalid host:port format");
+            }
+            String server = hostAndPort[0];
+            int port = Integer.parseInt(hostAndPort[1]);
+
+            return Shadowsocks.builder()
+                    .name(name)
+                    .type(ProtocolType.SS)
+                    .server(server)
+                    .port(port)
+                    .cipher(cipher)
+                    .password(password)
+                    .build();
+        } catch (Exception e) {
+            System.err.println("Failed to parse SS link: " + e.getMessage());
+            return null;
         }
-        return null;
     }
 
     private static Vless parseVless(String link) {
         try {
-            // 移除协议头 "vless://"
-            if (!link.startsWith("vless://")) {
-                throw new IllegalArgumentException("Unsupported protocol: " + link);
-            }
+            Assert.isTrue(link.startsWith("vless://"), "Unsupported protocol: " + link);
             String raw = link.substring("vless://".length());
 
             // 分离 UUID 和后续部分
             int atIndex = raw.indexOf('@');
-            if (atIndex == -1) {
-                throw new IllegalArgumentException("Invalid VLESS link format: missing '@'");
-            }
+            Assert.isTrue(atIndex > 0, "Unsupported protocol: " + link);
+
             String uuid = raw.substring(0, atIndex);
             String remaining = raw.substring(atIndex + 1);
 
@@ -55,8 +102,8 @@ public class ProtocolUtil {
             Map<String, String> params = parseQuery(query);
 
             // 构建 Vless 对象
-            Vless vless = Vless.builder()
-                    .name(name.isEmpty() ? "Unnamed" : name)
+            return Vless.builder()
+                    .name(name.isEmpty() ? "Unnamed" : cn.hutool.core.net.URLDecoder.decode(name, StandardCharsets.UTF_8))
                     .type(ProtocolType.VLESS)
                     .server(server)
                     .port(port)
@@ -70,8 +117,6 @@ public class ProtocolUtil {
                     .shortId(params.getOrDefault("sid", ""))
                     .clientFingerprint(params.getOrDefault("fp", ""))
                     .build();
-
-            return vless;
 
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to parse VLESS link: " + e.getMessage(), e);
