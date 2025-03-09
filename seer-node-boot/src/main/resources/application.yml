@@ -4,10 +4,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 178.236.243.139:8848
+        server-addr: 154.222.21.116:8848
         enabled: true
         register-enabled: true
-        namespace: bf8bb62e-8ab9-42e9-9913-548938bc2c64
+        namespace: 26a4b435-7fd1-478a-af92-eecd24df33bc
         group: DEFAULT_GROUP
 server:
   port: 7700
@@ -24,9 +24,9 @@ dubbo:
     port: -1
   registry:
     #配置中心nacos地址
-    address: nacos://178.236.243.139:8848
+    address: nacos://154.222.21.116:8848
   config-center:
-    namespace: bf8bb62e-8ab9-42e9-9913-548938bc2c64
+    namespace: 26a4b435-7fd1-478a-af92-eecd24df33bc
   consumer:
     timeout: 300000
   application:

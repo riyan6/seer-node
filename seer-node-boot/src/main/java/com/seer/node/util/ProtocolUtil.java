@@ -6,6 +6,7 @@ import com.seer.node.model.biz.Protocol;
 import com.seer.node.model.entity.Shadowsocks;
 import com.seer.node.model.entity.Vless;
 import com.seer.node.model.enums.ProtocolType;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
 
 import java.net.URLDecoder;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+@Slf4j
 public class ProtocolUtil {
 
     private static final Map<String, Function<String, Protocol>> PARSERS = Map.of(
@@ -33,6 +35,7 @@ public class ProtocolUtil {
     }
 
     private static Shadowsocks parseSs(String link) {
+        log.info("处理ss订阅 {}", link);
         try {
             // 移除 "ss://" 前缀
             String uriPart = link.substring(5);
@@ -80,6 +83,7 @@ public class ProtocolUtil {
     }
 
     private static Vless parseVless(String link) {
+        log.info("处理vless订阅 {}", link);
         try {
             Assert.isTrue(link.startsWith("vless://"), "Unsupported protocol: " + link);
             String raw = link.substring("vless://".length());
