@@ -1,16 +1,24 @@
 package com.seer.node.model.biz;
 
 import com.seer.node.model.enums.ProtocolType;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-@Data
-@SuperBuilder
-public class Protocol {
+import java.io.Serializable;
 
-    private String name;
-    private ProtocolType type;
-    private String server;
-    private Integer port;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString
+@SuperBuilder
+abstract public class Protocol implements Serializable {
+
+    protected String name;
+    protected ProtocolType type;
+    protected String server;
+    protected Integer port;
 
 }

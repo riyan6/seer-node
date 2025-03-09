@@ -1,15 +1,13 @@
 package com.seer.node.model.entity;
 
 import com.seer.node.model.biz.Protocol;
-import com.seer.node.model.enums.ProtocolType;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import lombok.*;
 
 @Data
-@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Vless extends Protocol {
 
     private String uuid;

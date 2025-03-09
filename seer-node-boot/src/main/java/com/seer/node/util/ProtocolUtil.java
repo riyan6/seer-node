@@ -12,20 +12,24 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 public class ProtocolUtil {
+
+    private static final Map<String, Function<String, Protocol>> PARSERS = Map.of(
+            "vless:", ProtocolUtil::parseVless,
+            "ss:", ProtocolUtil::parseSs
+    );
 
     public static Protocol parse(String link) {
         if (StrUtil.isEmpty(link)) {
             return null;
         }
-        if (link.startsWith("vless:")) {
-            return parseVless(link);
-        }
-        if (link.startsWith("ss:")) {
-            return parseSs(link);
-        }
-        return null;
+        return PARSERS.entrySet().stream()
+                .filter(entry -> link.startsWith(entry.getKey()))
+                .findFirst()
+                .map(entry -> entry.getValue().apply(link))
+                .orElse(null);
     }
 
     private static Shadowsocks parseSs(String link) {
@@ -60,14 +64,15 @@ public class ProtocolUtil {
             String server = hostAndPort[0];
             int port = Integer.parseInt(hostAndPort[1]);
 
-            return Shadowsocks.builder()
-                    .name(name)
-                    .type(ProtocolType.SS)
-                    .server(server)
-                    .port(port)
+            var ss = Shadowsocks.builder()
                     .cipher(cipher)
                     .password(password)
                     .build();
+            ss.setName(name);
+            ss.setType(ProtocolType.SS);
+            ss.setServer(server);
+            ss.setPort(port);
+            return ss;
         } catch (Exception e) {
             System.err.println("Failed to parse SS link: " + e.getMessage());
             return null;
@@ -107,11 +112,7 @@ public class ProtocolUtil {
             Map<String, String> params = parseQuery(query);
 
             // 构建 Vless 对象
-            return Vless.builder()
-                    .name(name.isEmpty() ? "Unnamed" : cn.hutool.core.net.URLDecoder.decode(name, StandardCharsets.UTF_8))
-                    .type(ProtocolType.VLESS)
-                    .server(server)
-                    .port(port)
+            var vless = Vless.builder()
                     .uuid(uuid)
                     .network(params.getOrDefault("type", "tcp"))
                     .udp(params.containsKey("udp") ? Boolean.parseBoolean(params.get("udp")) : null)
@@ -122,7 +123,11 @@ public class ProtocolUtil {
                     .shortId(params.getOrDefault("sid", ""))
                     .clientFingerprint(params.getOrDefault("fp", ""))
                     .build();
-
+            vless.setName(name.isEmpty() ? "Unnamed" : cn.hutool.core.net.URLDecoder.decode(name, StandardCharsets.UTF_8));
+            vless.setType(ProtocolType.VLESS);
+            vless.setServer(server);
+            vless.setPort(port);
+            return vless;
         } catch (Exception e) {
             throw new IllegalArgumentException("Failed to parse VLESS link: " + e.getMessage(), e);
         }
